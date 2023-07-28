@@ -135,3 +135,8 @@ func main() {
 }
 ```
 ##### (You can find this file here: [example/example.go](https://github.com/Binozo/GoDrop/tree/master/example/example.go))
+
+### TODO's
+- [x] Add discovering receiver functionality
+- [ ] Improve discovering [(sometimes the receiver doesn't react)](https://github.com/Binozo/GoDrop/blob/b6088aa7652392c2edd4e20268a87abca74c51df/internal/awdl/service.go#L76)
+- [ ] Add uploading feature (first we need to improve discovering)
