@@ -18,7 +18,7 @@ func main() {
 	// OWL works correctly on your hardware
 	//
 	// Take a look `owl.SubscribeToLogs()` if you want
-	// to listen at logs
+	// to listen to logs
 	go func() {
 		for {
 			owlError := <-owl.SubscribeToErrors()

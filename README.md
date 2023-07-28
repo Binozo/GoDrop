@@ -93,7 +93,7 @@ func main() {
 	// OWL works correctly on your hardware
 	//
 	// Take a look `owl.SubscribeToLogs()` if you want
-	// to listen at logs
+	// to listen to logs
 	go func() {
 		for {
 			owlError := <-owl.SubscribeToErrors()
@@ -111,7 +111,7 @@ func main() {
 	// Here you can accept or decline the sending request
 	// If you don't define this all requests will be declined
 	airdrop.OnAsk(func(request air.Request) bool {
-		fmt.Println("Incoming request from", request.SenderModelName)
+		fmt.Println("Incoming request from", request.SenderComputerName)
 		fmt.Println("Wants to send", len(request.Files), "files")
 		return true
 	})
