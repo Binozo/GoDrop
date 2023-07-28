@@ -26,6 +26,8 @@ var wifiInterface = DefaultWifiInterface
 var debug = false
 var appleAccount = account.Default
 
+var airDropBeaconReceiver = make(chan ble.AirDropBeacon)
+
 func init() {
 	osHostname, err := os.Hostname()
 	if err == nil {
@@ -110,45 +112,9 @@ func Init() error {
 // StartReceiving starts the listening process for incoming files.
 // OnAsk and OnFiles need to be called before StartReceiving
 func StartReceiving() error {
-	airDropBeaconReceiver := make(chan ble.AirDropBeacon)
-
-	go func() {
-		for {
-			receivedBeacon := <-airDropBeaconReceiver
-			if debug {
-				log.Debug().Msgf("Received AirDrop Beacon from %s with RSSI %d", receivedBeacon.DeviceMac, receivedBeacon.RSSI)
-			}
-			err := awdl.RegisterService(hostname)
-			if err != nil {
-				// Failed to register service somehow
-				if debug {
-					log.Error().Err(err).Msg("Couldn't register AirDrop Service")
-				}
-			}
-		}
-	}()
-
-	// Starting BLE scan
-	go func() {
-		for {
-			err := ble.StartScan(airDropBeaconReceiver)
-			if err != nil {
-				restartTimeout := time.Second * 2
-				if debug {
-					log.Error().Err(err).Msgf("BLE scan failed. Restarting in %d seconds...", restartTimeout.Seconds())
-				}
-				time.Sleep(restartTimeout)
-			}
-		}
-	}()
-
-	// Now we start Bluetooth Advertisement
-	err := ble.SendAirDropBeacon(appleAccount)
+	err := startBleSystem(true)
 	if err != nil {
-		if debug {
-			log.Error().Err(err).Msg("Failed to start BLE advertising")
-		}
-		return failedStartingBLEAdvertising
+		return err
 	}
 
 	err = webserver.Start()
@@ -173,6 +139,70 @@ func OnAsk(callback func(request air.Request) bool) {
 // []*cpio.File contains the actual files.
 func OnFiles(callback func(request air.Request, files []*cpio.File)) {
 	interaction.AddFilesCallback(callback)
+}
+
+func StartDiscover(onReceiverFound func(receiver air.Receiver)) error {
+	interaction.AddReceiverFoundCallback(onReceiverFound)
+
+	err := startBleSystem(false)
+	if err != nil {
+		return err
+	}
+
+	err = awdl.StartDiscover()
+	if err != nil {
+		return err
+	}
+	// Successfully started discovering process
+	return nil
+}
+
+// Manages all Ble tasks like sending beacons
+// and searching for beacons
+// registerService defines if you want to make
+// your device visible to others
+func startBleSystem(registerService bool) error {
+	if registerService {
+		go func() {
+			for {
+				receivedBeacon := <-airDropBeaconReceiver
+				if debug {
+					log.Debug().Msgf("Received AirDrop Beacon from %s with RSSI %d", receivedBeacon.DeviceMac, receivedBeacon.RSSI)
+				}
+				err := awdl.RegisterService(hostname)
+				if err != nil {
+					// Failed to register service somehow
+					if debug {
+						log.Error().Err(err).Msg("Couldn't register AirDrop Service")
+					}
+				}
+			}
+		}()
+	}
+
+	// Starting BLE scan
+	go func() {
+		for {
+			err := ble.StartScan(airDropBeaconReceiver)
+			if err != nil {
+				restartTimeout := time.Second * 2
+				if debug {
+					log.Error().Err(err).Msgf("BLE scan failed. Restarting in %d seconds...", restartTimeout.Seconds())
+				}
+				time.Sleep(restartTimeout)
+			}
+		}
+	}()
+
+	// Now we start Bluetooth Advertisement
+	err := ble.SendAirDropBeacon(appleAccount)
+	if err != nil {
+		if debug {
+			log.Error().Err(err).Msg("Failed to start BLE advertising")
+		}
+		return failedStartingBLEAdvertising
+	}
+	return nil
 }
 
 // Shutdown gracefully
