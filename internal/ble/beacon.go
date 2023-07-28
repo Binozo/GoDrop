@@ -43,7 +43,12 @@ func StartScan(onBeaconReceive chan AirDropBeacon) error {
 						ReceivedTimestamp: time.Now(),
 					}
 
-					onBeaconReceive <- beacon
+					select {
+					case onBeaconReceive <- beacon:
+						break // sent
+					case <-time.After(time.Millisecond * 200):
+						break // not sent (noone listening)
+					}
 				}
 			}
 		}
