@@ -9,9 +9,18 @@ import (
 const appleBit = 0x004C
 const airDropBit = 0x05
 
+// These variables prohibit the calling of the associated functions more than once
+// Because the required action is already running
+var scanStarted = false
+var beaconSendingStarted = false
+
 // SendAirDropBeacon makes your device discoverable for
 // AirDrop sending requests using BLE
 func SendAirDropBeacon(appleAccount account.AppleAccount) error {
+	if beaconSendingStarted {
+		// already running
+		return nil
+	}
 	manufacturerData := appleAccount.BuildManufacturerData()
 
 	adv = adapter.DefaultAdvertisement()
@@ -23,12 +32,20 @@ func SendAirDropBeacon(appleAccount account.AppleAccount) error {
 			appleBit: manufacturerData,
 		},
 	})
-	return adv.Start()
+	beaconSendingStarted = true
+	err := adv.Start()
+	beaconSendingStarted = false
+	return err
 }
 
 // StartScan searches for AirDrop beacons from other AirDrop senders
 func StartScan(onBeaconReceive chan AirDropBeacon) error {
-	return adapter.Scan(func(adapter *bluetooth.Adapter, result bluetooth.ScanResult) {
+	if scanStarted {
+		// Nah already running
+		return nil
+	}
+	scanStarted = true
+	err := adapter.Scan(func(adapter *bluetooth.Adapter, result bluetooth.ScanResult) {
 		// Now we need to check if our result's ManufacturerData contains the holy AppleBit
 		for k, v := range result.ManufacturerData() {
 			if k == appleBit {
@@ -53,9 +70,13 @@ func StartScan(onBeaconReceive chan AirDropBeacon) error {
 			}
 		}
 	})
+	scanStarted = false
+	return err
 }
 
 func Shutdown() error {
+	scanStarted = false
+	beaconSendingStarted = false
 	adv.Stop()
 	return adapter.StopScan() // This doesn't work
 }
