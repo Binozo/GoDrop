@@ -1,6 +1,8 @@
 # GoDrop
 A Go implementation of [OpenDrop](https://github.com/seemoo-lab/opendrop).
 
+[![Go Reference](https://pkg.go.dev/badge/github.com/Binozo/GoDrop.svg)](https://pkg.go.dev/github.com/Binozo/GoDrop)
+
 Big thanks to [Seemoo 🇩🇪](https://github.com/seemoo-lab) for developing Open-Source implementations for AirDrop.
 ###### Made In Germany
 
@@ -113,7 +115,7 @@ func main() {
 	airdrop.OnAsk(func(request air.Request) bool {
 		fmt.Println("Incoming request from", request.SenderComputerName)
 		fmt.Println("Wants to send", len(request.Files), "files")
-		return true
+		return true // accepting
 	})
 
 	// Here you will be able to access the received files
