@@ -190,6 +190,7 @@ func listenForShutdown() {
 	}
 
 	awdl.ShutdownService()
+	awdl.StopDiscover()
 
 	//os.Exit(-1)
 }
