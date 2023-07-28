@@ -3,6 +3,7 @@ package ble
 import "github.com/Binozo/tinygo-bluetooth"
 
 var adapter = bluetooth.DefaultAdapter
+var adv *bluetooth.Advertisement
 
 const device = "hci0"
 

@@ -9,6 +9,8 @@ import (
 
 const OwlInterface = "awdl0"
 
+var owlCmd *exec.Cmd
+
 // Setup the Wifi interface and start OWL
 func Setup(wifiInterface string) error {
 	setupWifi(wifiInterface)
@@ -16,15 +18,15 @@ func Setup(wifiInterface string) error {
 }
 
 func startOwl(wifiInterface string) error {
-	cmd := exec.Command("owl", "-i", wifiInterface, "-c", "44") // -c 44 works best
+	owlCmd = exec.Command("owl", "-i", wifiInterface, "-c", "44") // -c 44 works best
 
 	// Owl is somehow only using stderr as main log output
-	//stdout, _ := cmd.StdoutPipe()
-	stderr, _ := cmd.StderrPipe()
+	//stdout, _ := owlCmd.StdoutPipe()
+	stderr, _ := owlCmd.StderrPipe()
 	//go listenOnOutput(stdout)
 	go listenOnOutput(stderr)
 
-	err := cmd.Start()
+	err := owlCmd.Start()
 	if err != nil {
 		return err
 	}
@@ -34,7 +36,7 @@ func startOwl(wifiInterface string) error {
 	//log.Info().Msgf("Owl is up and running at %s", GetOwlInterfaceAddr())
 
 	go func() {
-		err = cmd.Wait()
+		err = owlCmd.Wait()
 		if err != nil {
 			// Exited with error
 			owlTerminated(outLogs)
@@ -76,4 +78,9 @@ func GetOwlInterfaceAddr() string {
 
 	log.Fatal().Msg("Couldn't find Owl interface")
 	return ""
+}
+
+// Kill Owl
+func Kill() error {
+	return owlCmd.Process.Kill()
 }

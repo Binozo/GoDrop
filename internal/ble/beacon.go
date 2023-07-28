@@ -14,7 +14,7 @@ const airDropBit = 0x05
 func SendAirDropBeacon(appleAccount account.AppleAccount) error {
 	manufacturerData := appleAccount.BuildManufacturerData()
 
-	adv := adapter.DefaultAdvertisement()
+	adv = adapter.DefaultAdvertisement()
 	adv.Configure(bluetooth.AdvertisementOptions{
 		LocalName:    device,
 		ServiceUUIDs: nil,
@@ -48,4 +48,9 @@ func StartScan(onBeaconReceive chan AirDropBeacon) error {
 			}
 		}
 	})
+}
+
+func Shutdown() error {
+	adv.Stop()
+	return adapter.StopScan() // This doesn't work
 }

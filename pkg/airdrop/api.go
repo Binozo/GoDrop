@@ -14,6 +14,8 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 )
 
@@ -101,6 +103,7 @@ func Init() error {
 	if debug {
 		log.Info().Msg("GoDrop setup successful")
 	}
+	go listenForShutdown()
 	return nil
 }
 
@@ -170,4 +173,23 @@ func OnAsk(callback func(request air.Request) bool) {
 // []*cpio.File contains the actual files.
 func OnFiles(callback func(request air.Request, files []*cpio.File)) {
 	interaction.AddFilesCallback(callback)
+}
+
+// Shutdown gracefully
+func listenForShutdown() {
+	ch := make(chan os.Signal)
+	signal.Notify(ch, os.Interrupt, syscall.SIGTERM) // all OS signals
+	sig := <-ch
+	log.Info().Msgf("[GoDrop] Shutting down... (%v)", sig)
+	if err := owl.Kill(); err != nil {
+		log.Error().Err(err).Msg("Couldn't kill Owl")
+	}
+
+	if err := ble.Shutdown(); err != nil {
+		log.Error().Err(err).Msg("Couldn't BLE scan")
+	}
+
+	awdl.ShutdownService()
+
+	//os.Exit(-1)
 }
