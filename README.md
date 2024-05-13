@@ -3,6 +3,9 @@ A Go implementation of [OpenDrop](https://github.com/seemoo-lab/opendrop).
 
 [![Go Reference](https://pkg.go.dev/badge/github.com/Binozo/GoDrop.svg)](https://pkg.go.dev/github.com/Binozo/GoDrop)
 
+> [!WARNING]
+> This library only works until macOS Ventura and iOS 15. Apple apparently changed the way their AirDrop protocol works.
+
 Big thanks to [Seemoo 🇩🇪](https://github.com/seemoo-lab) for developing Open-Source implementations for AirDrop.
 ###### Made In Germany
 
